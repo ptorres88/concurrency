@@ -1,26 +1,20 @@
 import threading
-
 import time
-
 import random
 
 N = 8
-
-buffer = N * [None]
-
+buffer = N * ['x']
 free = threading.Semaphore(N)
 items = threading.Semaphore(0)
+sem = threading.Semaphore(1)
 
 def prod():
-
-    n = 0
     i = 0
     while True:
         time.sleep(random.random())
         free.acquire()
-        buffer[i] = n
         i = (i + 1) % N
-        n += 1
+	buffer[i] = '.'
         items.release()
 
 def cons():
@@ -28,17 +22,27 @@ def cons():
     while True:
         time.sleep(random.random())
         items.acquire()
-        print(buffer[i])
         i = (i + 1) % N
+	buffer[i] = 'x'
         free.release()
 
-def main():
+def check():
+    while True:
+        time.sleep(1)
+        bufstr = ""
+        for k in range(N):
+            bufstr += buffer[k] + ' '
+        print(bufstr)
 
+def main():
     p = threading.Thread(target=prod, args=[])
     c = threading.Thread(target=cons, args=[])
+    y = threading.Thread(target=check, args=[])
     p.start()
     c.start()
+    y.start()
     p.join()
     c.join()
+    y.join()
 
 main()
